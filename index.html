@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#efe3c6">
+  <title>Para ti</title>
+  <style>
+    :root { --ink: #64472f; --rose: #984b59; --paper: #efe3c6; --script: "Segoe Script", "Snell Roundhand", "Apple Chancery", "URW Chancery L", "Monotype Corsiva", cursive; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body { color: var(--ink); background: var(--paper); font-family: Georgia, serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible { outline: 1px solid var(--rose); outline-offset: 5px; }
+    main { position: relative; height: 100svh; height: 100dvh; }
+    .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: max(24px, env(safe-area-inset-top)) 26px max(22px, env(safe-area-inset-bottom)); background: radial-gradient(ellipse at center, #faf2df, #e9d9b6); opacity: 0; visibility: hidden; transition: opacity .65s ease, visibility .65s; pointer-events: none; overflow: hidden; }
+    .screen.active { opacity: 1; visibility: visible; pointer-events: auto; }
+    .screen[inert] { pointer-events: none; }
+    .script, h2 { font-family: var(--script); font-weight: 400; }
+    .eyebrow { margin: 0; font: 10px/1.5 Georgia, serif; text-transform: uppercase; letter-spacing: .27em; }
+    h2 { font-size: clamp(32px, 8vw, 45px); line-height: 1.4; margin: 8px 0 20px; }
+    .header { text-align: center; flex-shrink: 0; }
+    #access { padding: 0; background: var(--paper); }
+    .lock-art { flex: 1; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: center; padding-top: env(safe-area-inset-top); }
+    .lock-art img { display: block; width: min(100%, calc((100svh - 135px) * 880 / 1210)); width: min(100%, calc((100dvh - 135px) * 880 / 1210)); height: auto; max-height: 100%; object-fit: contain; mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 87%, transparent), linear-gradient(to right, transparent, #000 9%, #000 91%, transparent); mask-composite: intersect; }
+    .access { flex-shrink: 0; width: min(90%, 320px); margin: 0; text-align: center; padding: 8px 0 max(10px, env(safe-area-inset-bottom)); }
+    .access fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+    .access legend { width: 100%; padding: 0; font-size: 18px; margin-bottom: 12px; }
+    .input-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .otp { display: flex; gap: 9px; }
+    .otp input { width: 44px; height: 48px; min-width: 0; border: 1px solid #94786e70; background: #faf2df55; color: var(--ink); padding: 0; text-align: center; border-radius: 5px; font: 22px/1 Georgia, serif; caret-color: var(--rose); transition: border-color .2s, background .2s, box-shadow .2s; }
+    .otp input:focus { outline: none; border-color: var(--rose); background: #fff8e788; box-shadow: 0 0 0 3px #984b5910; }
+    .otp input[aria-invalid="true"] { border-color: var(--rose); }
+    .enter { border: 0; background: transparent; color: var(--ink); width: 44px; height: 48px; padding: 0; font-size: 24px; }
+    .message { min-height: 18px; font-size: 11px; margin: 6px 0 0; color: var(--rose); }
+    #menu { padding: 0; justify-content: center; background: #7c6049; }
+    #menu::before { content: ""; position: absolute; inset: -28px; background: var(--menu-bg) center / cover; filter: blur(22px); opacity: .75; }
+    .menu-scene { position: relative; width: min(100%, calc(100svh * .56)); width: min(100%, calc(100dvh * .56)); height: 100%; flex-shrink: 0; }
+    .menu-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+    .menu-buttons { position: absolute; inset: 28% 12% 25%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; column-gap: 7%; row-gap: 13%; }
+    .illustration-button { min-width: 0; min-height: 0; display: grid; place-items: center; border: 0; padding: 0; background: transparent; border-radius: 10px; opacity: 0; transform: translateY(12px) scale(.97); }
+    .illustration-button img { width: 100%; height: 100%; min-height: 0; object-fit: contain; transition: transform .4s ease, filter .4s ease; }
+    #menu.active .illustration-button { animation: appear 1s cubic-bezier(.22, .61, .36, 1) both; animation-delay: var(--delay); }
+    .illustration-button:nth-child(1) { --delay: .18s; }
+    .illustration-button:nth-child(2) { --delay: .34s; }
+    .illustration-button:nth-child(3) { --delay: .5s; }
+    .illustration-button:nth-child(4) { --delay: .66s; }
+    @keyframes appear { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @media (hover: hover) { .illustration-button:hover img { transform: translateY(-3px) scale(1.035); filter: drop-shadow(0 4px 5px #74354416); } }
+    .illustration-button:active img { transform: scale(.97); }
+    .back { flex-shrink: 0; border: 0; padding: 14px 22px; background: transparent; color: var(--ink); font-size: 17px; font-family: var(--script); margin-top: 16px; }
+    .back::before { content: "←"; font: 17px Georgia, serif; margin-right: 10px; }
+    .content { width: min(100%, 370px); flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+    .content-box { width: 100%; text-align: center; }
+    .gallery { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; height: min(96vw, 51dvh, 440px); }
+    .gallery img { width: 100%; height: 100%; min-height: 0; object-fit: contain; padding: 6px; background: #faf6ef; box-shadow: 0 4px 16px #6b504015; }
+    .caption { font-family: var(--script); font-size: 18px; margin: 22px 0 0; }
+    .video-placeholder { aspect-ratio: 4/3; background: linear-gradient(145deg, #b9c1b4, #ddd0bd 60%, #9aa894); border: 7px solid #faf6ef; display: grid; place-content: center; gap: 12px; }
+    .play { width: 45px; height: 45px; border: 1px solid #faf6efd9; border-radius: 50%; display: grid; place-items: center; margin: auto; color: #faf6ef; font-size: 18px; }
+    .video-placeholder p { margin: 0; font-family: var(--script); font-size: 20px; }
+    video { width: 100%; max-height: 45svh; }
+    .letter { padding: 32px 24px; background: #fbf2debb; box-shadow: 0 6px 30px #6b50400b; text-align: left; }
+    .letter p { font-family: var(--script); font-size: clamp(17px, 4.5vw, 22px); line-height: 1.9; margin: 0 0 18px; }
+    .letter p:last-child { text-align: right; margin-bottom: 0; }
+    .gift { width: min(74vw, 270px, 36dvh); height: min(74vw, 270px, 36dvh); object-fit: contain; margin: 0 auto; display: block; }
+    @media (min-aspect-ratio: 3/4) { .menu-scene { mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent); } }
+    @media (max-height: 660px) { .screen { padding-top: 16px; padding-bottom: 12px; } h2 { font-size: 30px; margin-bottom: 8px; } .back { margin-top: 4px; } .letter { padding: 22px; } }
+    @media (max-height: 450px) and (orientation: landscape) { #access { flex-direction: row; justify-content: center; gap: 28px; padding: 12px 24px; } .lock-art { flex: 0 1 230px; height: 100%; } .lock-art img { width: auto; height: 100%; } #access .access { width: min(40%, 250px); padding: 0; } .screen { padding: 10px 20px; } h2 { font-size: 24px; margin: 0; } .eyebrow { font-size: 8px; } .gallery { width: min(370px, 60vw); height: 49dvh; margin: auto; } .video-placeholder { max-width: 240px; margin: auto; } .letter { padding: 12px 20px; } .letter p { font-size: 15px; line-height: 1.5; margin-bottom: 8px; } .gift { width: 110px; height: 110px; } .caption { margin-top: 10px; font-size: 16px; } .back { padding: 8px; } }
+    @media (max-height: 450px) and (orientation: landscape) { .otp { gap: 6px; } .otp input { width: 36px; height: 44px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } #menu.active .illustration-button { opacity: 1; transform: none; } }
+
+    /* Las fotos aprovechan la altura disponible sin crear scroll. */
+    #photos { padding-left: 14px; padding-right: 14px; }
+    #photos .content { width: min(100%, 460px); }
+    #photos .content-box { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+    #photos .gallery { flex: 1; min-height: 0; height: auto; gap: 10px; width: 100%; }
+    #photos .gallery img { padding: 4px; min-width: 0; }
+    #photos .caption { flex-shrink: 0; margin-top: 12px; }
+    /* El sobre crece, se sacude y deja ver la carta que hay detrás. */
+    .letter-stage { position: relative; width: 100%; height: min(60dvh, 500px); display: grid; place-items: center; }
+    .letter-message { width: 100%; opacity: 0; transform: translateY(10px); }
+    .opening-envelope { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; pointer-events: none; opacity: 0; }
+    .opening-envelope img { width: min(100%, 390px); height: 100%; max-height: 100%; object-fit: contain; }
+    #letter.active .opening-envelope { animation: open-envelope 2.6s cubic-bezier(.22, .61, .36, 1) both; }
+    #letter.active .letter-message { animation: reveal-letter .9s ease 1.7s both; }
+    @keyframes open-envelope {
+      0% { opacity: 0; transform: scale(.48); }
+      28% { opacity: 1; transform: scale(1); }
+      38% { opacity: 1; transform: translateX(-5px) rotate(-3deg) scale(1); }
+      46% { opacity: 1; transform: translateX(5px) rotate(3deg) scale(1); }
+      54% { opacity: 1; transform: translateX(-3px) rotate(-2deg) scale(1); }
+      62% { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+      100% { opacity: 0; transform: scale(1.035); }
+    }
+    @keyframes reveal-letter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-height: 450px) and (orientation: landscape) {
+      #photos .gallery { grid-template-columns: repeat(4, 1fr); grid-template-rows: minmax(0, 1fr); }
+      #photos .content { width: min(100%, 720px); }
+      #photos .caption { margin-top: 6px; }
+      .letter-stage { height: 62dvh; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #letter.active .opening-envelope { display: none; }
+      #letter.active .letter-message { opacity: 1; transform: none; }
+    }
+
+    .gift-lock { position: absolute; right: 4px; bottom: 4px; width: 29px; height: 29px; display: grid; place-items: center; color: var(--rose); background: #f5ead3; border: 1px solid #984b5940; border-radius: 50%; }
+    .gift-lock svg { width: 15px; height: 18px; }
+    .gift-lock[hidden] { display: none; }
+    .illustration-button:disabled { cursor: default; }
+    .illustration-button:disabled img { opacity: .45; filter: saturate(.5); }
+    .illustration-button:disabled:hover img, .illustration-button:disabled:active img { transform: none; }
+    .gift-status { position: absolute; left: 12%; right: 12%; bottom: 19%; margin: 0; text-align: center; font: 12px/1.5 Georgia, serif; color: var(--rose); }
+    #gift .gift { transform-origin: center; }
+    #gift.active .gift { animation: celebrate-gift 1.9s cubic-bezier(.22, .61, .36, 1) both; }
+    @keyframes celebrate-gift {
+      0% { opacity: 0; transform: scale(.9); }
+      18% { opacity: 1; transform: scale(1); }
+      30% { opacity: 1; transform: translateX(-5px) rotate(-4deg) scale(1); }
+      40% { opacity: 1; transform: translateX(5px) rotate(4deg) scale(1); }
+      50% { opacity: 1; transform: translateX(-3px) rotate(-2deg) scale(1); }
+      60% { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+      88% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1.16); }
+    }
+    .confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
+    .confetti-piece { position: absolute; top: -22px; left: var(--x); width: var(--size); height: calc(var(--size) * 1.65); border-radius: 2px; background: var(--color); opacity: 0; }
+    #gift.active .confetti-piece { animation: confetti-fall var(--duration) linear var(--delay) both; }
+    @keyframes confetti-fall {
+      0% { opacity: 0; transform: translate3d(0, -10px, 0) rotate(0deg); }
+      8% { opacity: .9; }
+      80% { opacity: .9; }
+      100% { opacity: 0; transform: translate3d(var(--drift), calc(100dvh + 40px), 0) rotate(var(--spin)); }
+    }
+    @media (prefers-reduced-motion: reduce) { #gift.active .gift { opacity: 1; transform: none; } .confetti { display: none; } }
+
+    /* Dos cuerdas en U; fotos y pinzas se inclinan con la tangente de la cuerda. */
+    #photos .gallery { display: flex; flex-direction: column; gap: 14px; }
+    .photo-row { position: relative; width: 100%; flex: 1; min-height: 0; }
+    .photo-rope { position: absolute; left: 0; top: 0; width: 100%; height: 42px; overflow: visible; pointer-events: none; }
+    .photo-rope path { stroke: #927253; stroke-width: 1.7; stroke-linecap: round; filter: drop-shadow(0 1px 1px #65442620); }
+    .hanging-photo { position: absolute; left: 0; top: 0; width: 46%; height: calc(100% - 36px); margin: 0; will-change: transform; transform-origin: 50% -9px; }
+    #photos .hanging-photo img { display: block; width: 100%; height: 100%; padding: 5px 5px 9px; background: #fff8e9; box-shadow: 0 5px 14px #6b504022; }
+    .clothespin { position: absolute; left: calc(50% - 5px); top: -19px; z-index: 1; width: 10px; height: 27px; border: 1px solid #94714c; border-radius: 2px; background: linear-gradient(90deg, #cda777, #e6c699 48%, #b38a5c); box-shadow: 1px 2px 3px #65442625; }
+    .clothespin::before { content: ""; position: absolute; left: -1px; right: -1px; top: 12px; height: 3px; border-top: 1px solid #725942; border-bottom: 1px solid #725942; background: #bda58a; }
+    @media (max-height: 450px) and (orientation: landscape) { #photos .gallery { gap: 4px; } .hanging-photo { height: calc(100% - 26px); } .clothespin { height: 20px; top: -15px; } }
+
+    /* Las casillas se centran por sí solas; la flecha queda a su derecha. */
+    .input-wrap { position: relative; gap: 0; }
+    .input-wrap .enter { position: absolute; left: calc(50% + 108px); top: 0; }
+    #letter { padding-left: 14px; padding-right: 14px; }
+    #letter .content { width: min(100%, 560px); }
+    #letter .letter-stage { height: 100%; min-height: 0; }
+    #letter .letter-message { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 20px 22px 10px; }
+    .letter-copy { flex: 1; min-height: 0; overflow: hidden; }
+    .letter-page { display: none; }
+    .letter-page.current { display: block; }
+    #letter .letter-page p { font-size: clamp(16px, 4.1vw, 19px); line-height: 1.6; margin: 0 0 12px; text-align: left; white-space: pre-line; }
+    #letter .letter-page p.signature { text-align: right; }
+    .letter-pagination { flex-shrink: 0; display: flex; justify-content: center; align-items: center; gap: 18px; padding-top: 8px; font: 11px Georgia, serif; color: var(--rose); }
+    .page-nav { background: transparent; border: 0; width: 36px; height: 32px; padding: 0; color: var(--rose); font: 20px Georgia, serif; }
+    .page-nav:disabled { opacity: .25; cursor: default; }
+    #letter .opening-envelope img { height: min(60dvh, 500px); }
+    @media (max-width: 360px) { #letter .letter-message { padding: 14px 16px 8px; } }
+    @media (max-height: 450px) and (orientation: landscape) { .input-wrap .enter { left: calc(50% + 88px); } #letter .letter-message { padding: 10px 18px 6px; } #letter .letter-page p { font-size: 15px; line-height: 1.45; margin-bottom: 8px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="access" class="screen active" aria-label="Acceso">
+      <div class="lock-art"><img src="Candado-inicial.jpeg" alt="Candado en forma de corazón y una llave, rodeados de flores" fetchpriority="high"></div>
+      <form class="access" id="access-form">
+        <fieldset aria-describedby="message">
+          <legend class="script">Nuestra contraseña</legend>
+          <div class="input-wrap">
+            <div class="otp">
+              <input id="code-1" type="text" inputmode="numeric" pattern="[0-9]" maxlength="4" autocomplete="one-time-code" aria-label="Dígito 1" required>
+              <input id="code-2" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="Dígito 2" required>
+              <input id="code-3" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="Dígito 3" required>
+              <input id="code-4" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="Dígito 4" required>
+            </div>
+            <button class="enter" type="submit" aria-label="Entrar">→</button>
+          </div>
+        </fieldset>
+        <p id="message" class="message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <section id="menu" class="screen" inert aria-label="Menú principal">
+      <div class="menu-scene">
+        <img class="menu-art" src="menu-limpio-recortado.png" alt="Papel antiguo vacío, rodeado de flores, lazos, cartas y encaje">
+        <div class="menu-buttons">
+          <button class="illustration-button" data-go="photos" aria-label="Fotos — cámara"><img src="camara-roja.png" alt="" draggable="false"></button>
+          <button class="illustration-button" data-go="letter" aria-label="Carta — sobre"><img src="carta-roja.png" alt="" draggable="false"></button>
+          <a class="illustration-button" data-youtube href="https://www.youtube.com/watch?v=a1Femq4NPxs" target="_blank" rel="noopener noreferrer" aria-label="Vídeo — abrir YouTube en una pestaña nueva"><img src="casete-rojo.png" alt="" draggable="false"></a>
+          <button class="illustration-button" data-go="gift" aria-label="Regalo bloqueado: abre Fotos, Vídeo y Carta primero" disabled aria-describedby="gift-status"><img src="regalo-rojo.png" alt="" draggable="false"><span class="gift-lock" aria-hidden="true"><svg viewBox="0 0 18 22" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 9V6a4 4 0 0 1 8 0v3"/><rect x="2" y="9" width="14" height="11" rx="2"/><path d="M9 13v3"/></svg></span></button>
+        </div>
+        <p id="gift-status" class="gift-status" role="status" aria-live="polite">Abre los otros tres para ver tu regalo.</p>
+      </div>
+    </section>
+    <section id="photos" class="screen" inert aria-label="Fotos">
+      <header class="header"><p class="eyebrow">Nuestros recuerdos</p><h2>Las fotos</h2></header>
+      <div class="content"><div class="content-box"><div class="gallery">
+          <div class="photo-row">
+            <svg class="photo-rope" aria-hidden="true" preserveAspectRatio="none"><path fill="none"/></svg>
+            <figure class="hanging-photo" data-side="left"><span class="clothespin" aria-hidden="true"></span><img data-photo="0" alt="Nuestro primer recuerdo"></figure>
+            <figure class="hanging-photo" data-side="right"><span class="clothespin" aria-hidden="true"></span><img data-photo="1" alt="Nuestro segundo recuerdo"></figure>
+          </div>
+          <div class="photo-row">
+            <svg class="photo-rope" aria-hidden="true" preserveAspectRatio="none"><path fill="none"/></svg>
+            <figure class="hanging-photo" data-side="left"><span class="clothespin" aria-hidden="true"></span><img data-photo="2" alt="Nuestro tercer recuerdo"></figure>
+            <figure class="hanging-photo" data-side="right"><span class="clothespin" aria-hidden="true"></span><img data-photo="3" alt="Nuestro cuarto recuerdo"></figure>
+          </div>
+        </div><p class="caption">Nuestros momentos.</p></div></div>
+      <button class="back" data-go="menu">Volver atrás</button>
+    </section>
+<section id="letter" class="screen" inert aria-label="Carta">
+      <header class="header"><p class="eyebrow">De mí, para ti</p><h2>La carta</h2></header>
+      <div class="content"><div class="letter-stage">
+        <article class="letter letter-message">
+          <div class="letter-copy" aria-label="Texto de la carta"></div>
+          <nav class="letter-pagination" aria-label="Páginas de la carta">
+            <button class="page-nav" id="letter-prev" type="button" aria-label="Página anterior">←</button>
+            <span id="letter-page-status" role="status" aria-live="polite"></span>
+            <button class="page-nav" id="letter-next" type="button" aria-label="Página siguiente">→</button>
+          </nav>
+        </article>
+        <template id="letter-source"><p>Feliz Cumpleaños, Piliiiis!!</p><p>Hoy es tu día y quería recordarte lo mucho que te quiero y lo importante que eres para mí.</p><p>Entre tantísimas personas y justo en mitad de Madrid, tuve la suerte de coincidir contigo por casualidad, quien iba a decir, q te ibas a acabar convirtiéndote en mi mejor amiga.</p><p>Gracias por formar parte de mi vida, por estar a mi lado y por hacer que, incluso en los momentos más difíciles, todo fuese un poquito más fácil.</p><p>No sé si eres consciente de lo mucho que me has ayudado, sobretodo el año pasado que fue bastante duro, pero espero que algún día puedas darte cuenta de lo importante que has sido para mí.</p><p>Te quiero muchísimo, Pilar, más de lo que seguramente te digo en el día a día.<br>Nunca te olvides de lo mucho q significas para mi, ni de lo que vales, ni de la suerte que tenemos las personas q formamos parte de tu vida.</p><p>Feliz cumpleaños, mi niña. Espero que hoy seas muy, muy feliz y que este año sea tan bonito como tú, se que para ti también esta siendo muy complicado y quiero q sepas que siempre que me necesites voy a estar ahí para mejorarlo.<br>Te mereces todo lo bueno del mundo.<br>Ojalá y nunca nos separemos porque me dolería mucho perderte.</p><p>Elisa&lt;3</p></template>
+        <div class="opening-envelope" aria-hidden="true"><img data-envelope-copy alt="" draggable="false"></div>
+      </div></div>
+      <button class="back" data-go="menu">Volver atrás</button>
+    </section>
+    <section id="gift" class="screen" inert aria-label="Regalo">
+      <div class="confetti" aria-hidden="true"></div>
+      <header class="header"><p class="eyebrow">Una pequeña sorpresa</p><h2>El regalo</h2></header>
+      <div class="content"><div class="content-box"><img class="gift" data-gift-copy alt="Regalo con un lazo"><p class="caption">Una sorpresa, solo para ti ♡</p></div></div>
+      <button class="back" data-go="menu">Volver atrás</button>
+    </section>
+  </main>
+  <script>
+    // Acceso visual. Puedes cambiar el código aquí.
+    const ACCESS_CODE = '1234';
+    // Sustituye estos placeholders por tus fotos (URLs o imágenes integradas).
+    const PHOTOS = ['foto-1.jpeg', 'foto-2.jpeg', 'foto-3.jpeg', 'foto-4.jpeg'];
+    document.getElementById('menu').style.setProperty('--menu-bg', `url("${document.querySelector('.menu-art').src}")`);
+    document.querySelector('[data-gift-copy]').src = document.querySelector('[data-go="gift"] img').src;
+    document.querySelector('[data-envelope-copy]').src = document.querySelector('[data-go="letter"] img').src;
+    document.querySelectorAll('[data-photo]').forEach(img => { const n = Number(img.dataset.photo); img.src = PHOTOS[n]; });
+    const visited = new Set();
+    const requiredSections = ['photos', 'video', 'letter'];
+    const giftButton = document.querySelector('[data-go="gift"]');
+    const giftLock = giftButton.querySelector('.gift-lock');
+    const giftStatus = document.getElementById('gift-status');
+    function giftReady() { return requiredSections.every(id => visited.has(id)); }
+    function updateGiftLock() {
+      const ready = giftReady();
+      giftButton.disabled = !ready;
+      giftButton.setAttribute('aria-label', ready ? 'Regalo' : 'Regalo bloqueado: abre Fotos, Vídeo y Carta primero');
+      giftLock.hidden = ready;
+      giftStatus.textContent = ready ? 'Tu regalo ya está listo.' : 'Abre los otros tres para ver tu regalo.';
+    }
+    const confetti = document.querySelector('.confetti');
+    const confettiColors = ['#984b59', '#c18b55', '#d9b66f', '#b67480', '#f3d5aa'];
+    for (let i = 0; i < 56; i++) {
+      const piece = document.createElement('i');
+      piece.className = 'confetti-piece';
+      piece.style.setProperty('--x', `${Math.random() * 100}%`);
+      piece.style.setProperty('--size', `${4 + Math.random() * 4}px`);
+      piece.style.setProperty('--color', confettiColors[i % confettiColors.length]);
+      piece.style.setProperty('--duration', `${2.8 + Math.random() * 1.8}s`);
+      piece.style.setProperty('--delay', `${1.35 + Math.random() * .9}s`);
+      piece.style.setProperty('--drift', `${Math.random() * 160 - 80}px`);
+      piece.style.setProperty('--spin', `${Math.random() * 1080 - 540}deg`);
+      confetti.appendChild(piece);
+    }
+    updateGiftLock();
+    const youtubeLink = document.querySelector('[data-youtube]');
+    function visitVideo() {
+      visited.add('video');
+      updateGiftLock();
+    }
+    youtubeLink.addEventListener('click', visitVideo);
+    youtubeLink.addEventListener('auxclick', event => { if (event.button === 1) visitVideo(); });
+    const photoRows = Array.from(document.querySelectorAll('.photo-row'));
+    let photoAnimations = [];
+    function stopPhotoAnimations() {
+      photoAnimations.forEach(animation => animation.cancel());
+      photoAnimations = [];
+    }
+    function arrangePhotoLines(animate = false) {
+      stopPhotoAnimations();
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      photoRows.forEach((row, rowIndex) => {
+        const width = row.getBoundingClientRect().width;
+        if (!width) return;
+        const rope = row.querySelector('.photo-rope');
+        // Media onda: extremos elevados y una única U en el centro.
+        const amplitude = 14;
+        const wave = x => 10 + amplitude * Math.sin(Math.PI * x / width);
+        const slope = x => amplitude * Math.PI / width * Math.cos(Math.PI * x / width);
+        const tilt = x => Math.atan(slope(x)) * 180 / Math.PI;
+        const path = [];
+        for (let step = 0; step <= 180; step++) {
+          const x = width * (-.8 + 2.6 * step / 180);
+          path.push(`${step ? 'L' : 'M'}${x.toFixed(2)} ${wave(x).toFixed(2)}`);
+        }
+        rope.setAttribute('viewBox', `0 0 ${width} 42`);
+        rope.querySelector('path').setAttribute('d', path.join(' '));
+        row.querySelectorAll('.hanging-photo').forEach(photo => {
+          const isLeft = photo.dataset.side === 'left';
+          const targetX = width * (isLeft ? .28 : .72);
+          const halfPhoto = photo.getBoundingClientRect().width / 2;
+          const position = x => `translate3d(${x - halfPhoto}px, ${wave(x) + 9}px, 0) rotate(${tilt(x)}deg)`;
+          photo.style.transform = position(targetX);
+          if (animate && !reduceMotion) {
+            const startX = width * (isLeft ? -.8 : 1.8);
+            const frames = [];
+            for (let step = 0; step <= 100; step++) {
+              const t = step / 100;
+              const x = startX + (targetX - startX) * t;
+              frames.push({ transform: position(x), opacity: Math.min(1, t * 9), offset: t });
+            }
+            photoAnimations.push(photo.animate(frames, {
+              duration: 1800, delay: 140 + rowIndex * 180,
+              easing: 'cubic-bezier(.22, .61, .36, 1)', fill: 'both'
+            }));
+          }
+        });
+      });
+    }
+    const photoResizeObserver = new ResizeObserver(() => arrangePhotoLines());
+    photoRows.forEach(row => photoResizeObserver.observe(row));
+    arrangePhotoLines();
+    const letterCopy = document.querySelector('.letter-copy');
+    const letterSource = document.getElementById('letter-source');
+    const letterPrevious = document.getElementById('letter-prev');
+    const letterNext = document.getElementById('letter-next');
+    const letterPageStatus = document.getElementById('letter-page-status');
+    let letterPages = [];
+    let letterPageIndex = 0;
+    function setLetterPage(index) {
+      letterPageIndex = Math.max(0, Math.min(index, letterPages.length - 1));
+      letterPages.forEach((page, n) => page.classList.toggle('current', n === letterPageIndex));
+      letterPageStatus.textContent = `${letterPageIndex + 1} / ${letterPages.length}`;
+      letterPrevious.disabled = letterPageIndex === 0;
+      letterNext.disabled = letterPageIndex === letterPages.length - 1;
+    }
+    function paginateLetter(reset = true) {
+      const oldIndex = letterPageIndex;
+      letterCopy.replaceChildren();
+      letterPages = [];
+      function newPage() {
+        letterPages.forEach(page => page.classList.remove('current'));
+        const page = document.createElement('div');
+        page.className = 'letter-page current';
+        letterPages.push(page);
+        letterCopy.appendChild(page);
+        return page;
+      }
+      let page = newPage();
+      const overflows = () => letterCopy.scrollHeight > letterCopy.clientHeight + 1;
+      letterSource.content.querySelectorAll('p').forEach(source => {
+        const text = source.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+        const decoded = document.createElement('p');
+        decoded.innerHTML = text;
+        const words = decoded.textContent.split(/(\s+)/).filter(Boolean);
+        let paragraph = document.createElement('p');
+        if (source.textContent === 'Elisa<3') paragraph.className = 'signature';
+        page.appendChild(paragraph);
+        paragraph.textContent = decoded.textContent;
+        if (overflows() && page.children.length > 1) {
+          paragraph.remove(); page = newPage(); page.appendChild(paragraph);
+        }
+        if (overflows()) {
+          paragraph.textContent = '';
+          let chunk = '';
+          words.forEach(word => {
+            paragraph.textContent = chunk + word;
+            if (overflows() && chunk.trim()) {
+              paragraph.textContent = chunk.trimEnd();
+              page = newPage();
+              paragraph = document.createElement('p'); page.appendChild(paragraph);
+              chunk = word.trimStart(); paragraph.textContent = chunk;
+            } else chunk += word;
+          });
+        }
+      });
+      setLetterPage(reset ? 0 : oldIndex);
+    }
+    letterPrevious.addEventListener('click', () => setLetterPage(letterPageIndex - 1));
+    letterNext.addEventListener('click', () => setLetterPage(letterPageIndex + 1));
+    const letterResizeObserver = new ResizeObserver(() => {
+      if (document.getElementById('letter').classList.contains('active')) paginateLetter(false);
+    });
+    letterResizeObserver.observe(letterCopy);
+    function show(id) {
+      const target = document.getElementById(id);
+      if (!target || target.classList.contains('active') || (id === 'gift' && !giftReady())) return;
+      if (requiredSections.includes(id)) { visited.add(id); updateGiftLock(); }
+      document.querySelectorAll('.screen').forEach(screen => { const active = screen === target; screen.classList.toggle('active', active); screen.inert = !active; });
+      document.querySelectorAll('video').forEach(video => video.pause());
+      if (id === 'letter') paginateLetter();
+      if (id === 'photos') arrangePhotoLines(true);
+      else stopPhotoAnimations();
+      const focusTarget = target.querySelector('h2') || target.querySelector('input') || target.querySelector('button');
+      if (focusTarget) { if (focusTarget.tagName === 'H2') focusTarget.tabIndex = -1; focusTarget.focus({ preventScroll: true }); }
+    }
+    const form = document.getElementById('access-form');
+    const digits = Array.from(document.querySelectorAll('.otp input'));
+    const message = document.getElementById('message');
+    function clearError() {
+      message.textContent = '';
+      digits.forEach(input => input.removeAttribute('aria-invalid'));
+    }
+    function distribute(value, start) {
+      const numbers = value.replace(/\D/g, '').slice(0, digits.length - start);
+      if (!numbers) return;
+      clearError();
+      Array.from(numbers).forEach((number, offset) => { digits[start + offset].value = number; });
+      const next = Math.min(start + numbers.length, digits.length - 1);
+      digits[next].focus();
+      digits[next].select();
+      if (start + numbers.length === digits.length && digits.every(input => /^[0-9]$/.test(input.value))) form.requestSubmit();
+    }
+    digits.forEach((input, index) => {
+      input.addEventListener('focus', () => input.select());
+      input.addEventListener('input', () => {
+        const value = input.value.replace(/\D/g, '');
+        input.value = '';
+        if (value) distribute(value, index);
+        else clearError();
+      });
+      input.addEventListener('paste', event => {
+        event.preventDefault();
+        distribute(event.clipboardData.getData('text'), index);
+      });
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Backspace' && !input.value && index > 0) {
+          event.preventDefault();
+          digits[index - 1].value = '';
+          digits[index - 1].focus();
+          clearError();
+        } else if (event.key === 'ArrowLeft' && index > 0) {
+          event.preventDefault(); digits[index - 1].focus();
+        } else if (event.key === 'ArrowRight' && index < digits.length - 1) {
+          event.preventDefault(); digits[index + 1].focus();
+        }
+      });
+    });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (digits.map(input => input.value).join('') === ACCESS_CODE) {
+        clearError();
+        digits.forEach(input => { input.value = ''; input.blur(); });
+        show('menu');
+      } else {
+        message.textContent = 'Ese no es el código. Prueba otra vez ♡';
+        digits.forEach(input => input.setAttribute('aria-invalid', 'true'));
+        digits[0].focus(); digits[0].select();
+      }
+    });
+    document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => show(button.dataset.go)));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !document.getElementById('access').classList.contains('active')) show('menu'); });
+  </script>
+</body>
+</html>
